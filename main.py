@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="shaheer.dev API")
 
-# Restrict to shaheer.dev in production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://shaheer.dev", "https://www.shaheer.dev"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
