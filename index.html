@@ -331,6 +331,24 @@
     .demo-note a{color:var(--text3)}
     .demo-note a:hover{color:var(--accent)}
 
+    /* ── CONTENT FACTORY PIPELINE ── */
+    .cf-pipeline{display:flex;flex-direction:column;gap:8px;padding:16px;
+      background:var(--bg);border:1px solid var(--border);border-radius:6px}
+    .cf-step{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px}
+    .cf-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);
+      font-weight:500;flex-shrink:0;margin-top:2px;min-width:28px}
+    .cf-lbl{font-size:13px;font-weight:600;color:var(--text);flex-shrink:0;min-width:130px}
+    .cf-desc{font-size:12px;color:var(--text2);line-height:1.5}
+    .cf-arrow{font-size:11px;color:var(--text3);padding:0 0 0 14px;
+      font-family:'JetBrains Mono',monospace;letter-spacing:.02em}
+    .cf-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .cf-row4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .cf-step.cf-sm{flex-direction:column;gap:2px;align-items:center;
+      justify-content:center;text-align:center;padding:8px 6px}
+    .cf-step.cf-sm .cf-lbl{font-size:11px;min-width:auto;color:var(--accent)}
+    @media(max-width:600px){.cf-row4{grid-template-columns:1fr 1fr}}
+
     /* ── CHAT FAB ── */
     .chat-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;
       background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;
@@ -663,6 +681,81 @@
           <p class="at-citation" id="at-citation"></p>
         </div>
         <p class="demo-note">Live system at <a href="https://asktax.pk" target="_blank" rel="noopener">asktax.pk</a> — search across 4,491 FBR documents and 2,041 case laws.</p>
+      </div>
+    </div>
+
+    <!-- Content Factory -->
+    <div class="product-card card" style="margin-top:20px">
+      <div class="product-meta">
+        <span class="tag">AI</span><span class="tag">Automation</span><span class="tag">Short-form Video</span>
+        <span class="status-badge" style="background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)">
+          <span style="width:5px;height:5px;background:var(--accent);border-radius:50%;display:inline-block;margin-right:4px"></span>Built
+        </span>
+      </div>
+      <p class="product-headline">One niche input. Four platforms publish. No editing, no cloud AI costs.</p>
+      <p class="product-body">Content Factory is a fully self-hosted n8n pipeline. Give it a niche and tone — it writes the script with Ollama, narrates it with Kokoro TTS, generates a 9:16 hero image with Flux.1 via ComfyUI, composes the video with FFmpeg, burns word-accurate captions via WhisperX, then pauses for a Telegram approve/reject before posting simultaneously to TikTok, Instagram Reels, YouTube Shorts, and Facebook. The entire AI stack runs in Docker. No per-token API costs.</p>
+      <div class="stack-row">
+        <span class="tag">n8n</span><span class="tag">Ollama</span><span class="tag">Kokoro TTS</span>
+        <span class="tag">Flux.1</span><span class="tag">ComfyUI</span><span class="tag">WhisperX</span>
+        <span class="tag">FFmpeg</span><span class="tag">Docker</span>
+      </div>
+      <div class="product-actions">
+        <button class="btn btn-ghost demo-toggle-btn" data-demo="cf-demo">See the pipeline →</button>
+        <button class="btn btn-primary" onclick="openChat()">Build something like this</button>
+      </div>
+      <div class="demo-area" id="cf-demo">
+        <div class="cf-pipeline">
+          <div class="cf-step">
+            <span class="cf-num">01</span>
+            <span class="cf-lbl">Webhook Trigger</span>
+            <span class="cf-desc">POST: niche, tone, platforms[], account_ids{} — starts the job</span>
+          </div>
+          <div class="cf-arrow">↓</div>
+          <div class="cf-step">
+            <span class="cf-num">02</span>
+            <span class="cf-lbl">Ollama (local LLM)</span>
+            <span class="cf-desc">Generates title, script body, per-platform hooks, hashtags, image prompt — no API costs</span>
+          </div>
+          <div class="cf-arrow">↓  runs in parallel</div>
+          <div class="cf-row2">
+            <div class="cf-step">
+              <span class="cf-num">03a</span>
+              <span class="cf-lbl">Kokoro TTS</span>
+              <span class="cf-desc">Narrates script → WAV audio (6 voice options)</span>
+            </div>
+            <div class="cf-step">
+              <span class="cf-num">03b</span>
+              <span class="cf-lbl">Flux.1 / ComfyUI</span>
+              <span class="cf-desc">Generates 9:16 hero image at 768×1344 — 4-step fast generation</span>
+            </div>
+          </div>
+          <div class="cf-arrow">↓</div>
+          <div class="cf-step">
+            <span class="cf-num">04</span>
+            <span class="cf-lbl">FFmpeg — Compose</span>
+            <span class="cf-desc">Merges image + audio → 1080×1920 MP4 @ 30fps. Runs once per platform branch.</span>
+          </div>
+          <div class="cf-arrow">↓</div>
+          <div class="cf-step">
+            <span class="cf-num">05</span>
+            <span class="cf-lbl">WhisperX — Captions</span>
+            <span class="cf-desc">Auto-transcribes narration → SRT, burned as styled white-on-black captions into the video</span>
+          </div>
+          <div class="cf-arrow">↓</div>
+          <div class="cf-step">
+            <span class="cf-num">06</span>
+            <span class="cf-lbl">HITL — Telegram</span>
+            <span class="cf-desc">Sends video preview + approve / reject link. Pipeline pauses until clicked — one approval per platform.</span>
+          </div>
+          <div class="cf-arrow">↓  approved → routes by platform</div>
+          <div class="cf-row4">
+            <div class="cf-step cf-sm"><span class="cf-lbl">TikTok</span></div>
+            <div class="cf-step cf-sm"><span class="cf-lbl">Instagram Reels</span></div>
+            <div class="cf-step cf-sm"><span class="cf-lbl">YouTube Shorts</span></div>
+            <div class="cf-step cf-sm"><span class="cf-lbl">Facebook Reels</span></div>
+          </div>
+        </div>
+        <p class="demo-note">Entirely self-hosted — Ollama, Kokoro, ComfyUI, and WhisperX all run via Docker Compose. Zero OpenAI or cloud AI spend.</p>
       </div>
     </div>
 
@@ -1023,7 +1116,8 @@ function showConfigResult(){
 // ── DEMO TOGGLES ──
 const demoLabels = {
   'nexadesk-demo': 'Try a simulated conversation →',
-  'asktax-demo':   'Try a sample tax query →'
+  'asktax-demo':   'Try a sample tax query →',
+  'cf-demo':       'See the pipeline →'
 };
 document.querySelectorAll('.demo-toggle-btn').forEach(btn => {
   btn.addEventListener('click', function(){
