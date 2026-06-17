@@ -1137,7 +1137,8 @@ document.querySelectorAll('.demo-toggle-btn').forEach(btn => {
 
 // ── NEXADESK DEMO ──
 const ndDemo = {
-  ready: false,
+  ready:     false,
+  sessionId: null,
   msgEl: null,
   tyEl:  null,
   inEl:  null,
@@ -1150,7 +1151,7 @@ const ndDemo = {
     this.inEl  = document.getElementById('nd-input');
     document.getElementById('nd-send').addEventListener('click', () => this.send());
     this.inEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.send(); } });
-    this.addBot("Good day! I'm the AI receptionist for Prestige Properties. Are you looking to buy, rent, or schedule a viewing today?");
+    this.addBot("Good day! I'm Nadia, AI receptionist for Prestige Properties. Are you looking to buy, rent, or schedule a viewing today?");
   },
 
   now() {
@@ -1173,27 +1174,27 @@ const ndDemo = {
     this.msgEl.scrollTop = this.msgEl.scrollHeight;
   },
 
-  respond(input) {
-    const s = input.toLowerCase();
-    if (/buy|purchase/.test(s))           return "Great — residential or commercial? And do you have a preferred area or budget in mind?";
-    if (/rent|lease/.test(s))             return "Of course. Which area are you considering, and when would you like to move in?";
-    if (/viewing|visit|see/.test(s))      return "I can arrange that right now. Which property, and what day works best for you?";
-    if (/price|cost|aed|how much/.test(s))return "Prices in that area start from AED 1.2M for 2BR. Shall I have an agent send you the full price list?";
-    if (/hello|hi|hey/.test(s))           return "Welcome! Are you looking to buy, rent, or just exploring what's available?";
-    return "Understood. Let me connect you with the right person. Can I take your name and contact number?";
-  },
-
-  send() {
+  async send() {
     const text = this.inEl.value.trim();
     if (!text) return;
     this.addUser(text);
     this.inEl.value = '';
     this.tyEl.style.display = 'flex';
     this.msgEl.scrollTop = this.msgEl.scrollHeight;
-    setTimeout(() => {
+    try {
+      const resp = await fetch('https://nexadesk.site/demo/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message: text, session_id: this.sessionId})
+      });
+      const data = await resp.json();
+      this.sessionId = data.session_id;
       this.tyEl.style.display = 'none';
-      this.addBot(this.respond(text));
-    }, 800);
+      this.addBot(data.reply);
+    } catch(_) {
+      this.tyEl.style.display = 'none';
+      this.addBot("Having trouble reaching NexaDesk right now — try again in a moment.");
+    }
   },
 
   esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1201,48 +1202,43 @@ const ndDemo = {
 
 // ── ASKTAX DEMO ──
 (function(){
-  const responses = {
-    withhold: {
-      a: "Under Section 153, withholding tax on payments to a resident person for services is 8% (companies) or 10% (individuals/AOPs). For goods, the rate is 4% where the supplier is on the Active Taxpayers List; 9% where not.",
-      s: "📎 Source: Income Tax Ordinance 2001, Section 153 — FBR Document #ITO-153"
-    },
-    salary: {
-      a: "Salary income is taxed under Section 149 at progressive slab rates for FY 2024-25: up to PKR 600,000 — nil; PKR 600,001–1,200,000 — 5%; PKR 1,200,001–2,400,000 — 15%; PKR 2,400,001–3,600,000 — 25%; above — 30%.",
-      s: "📎 Source: Finance Act 2024, First Schedule, Part I — FBR Document #FA2024-SCHED1"
-    },
-    gst: {
-      a: "The standard rate of Sales Tax (GST) is 18% as amended by the Finance Act 2023. Certain goods attract reduced rates or exemptions listed under the Sixth Schedule of the Sales Tax Act 1990.",
-      s: "📎 Source: Sales Tax Act 1990, Section 3 — Finance Act 2023 Amendment #STA-S3"
-    },
-    advance: {
-      a: "Under Section 147, advance tax is payable in four quarterly instalments due on: 25 September, 25 December, 25 March, and 15 June of each tax year. The amount equals 25% of the estimated annual tax liability.",
-      s: "📎 Source: Income Tax Ordinance 2001, Section 147 — FBR Circular 2024 #ITO-147"
-    }
-  };
-
   document.getElementById('at-ask').addEventListener('click', ask);
   document.getElementById('at-input').addEventListener('keydown', e => { if(e.key==='Enter') ask(); });
 
-  function ask() {
-    const val = document.getElementById('at-input').value.trim().toLowerCase();
+  async function ask() {
+    const val = document.getElementById('at-input').value.trim();
+    if (!val) return;
     const res = document.getElementById('at-result');
     const ans = document.getElementById('at-answer');
     const cit = document.getElementById('at-citation');
+    const btn = document.getElementById('at-ask');
 
-    let entry;
-    if (/withhold|153/.test(val))         entry = responses.withhold;
-    else if (/salary|149/.test(val))      entry = responses.salary;
-    else if (/gst|sales.?tax/.test(val))  entry = responses.gst;
-    else if (/advance.?tax|147/.test(val))entry = responses.advance;
+    btn.textContent = 'Searching…';
+    btn.disabled = true;
+    res.classList.remove('show');
 
-    if (entry) {
-      ans.textContent = entry.a;
-      cit.textContent = entry.s;
-    } else {
-      ans.textContent = "AskTax searches 195K+ FBR vectors for the precise answer. This demo shows the response format — the live system returns multi-source citations and relevant case law for every query.";
+    try {
+      const resp = await fetch('https://asktax.pk/api/demo/query', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({query: val})
+      });
+      const data = await resp.json();
+      if (resp.status === 429) {
+        ans.textContent = data.detail || 'Demo limit reached — visit asktax.pk to continue searching.';
+        cit.textContent = '';
+      } else {
+        ans.textContent = data.answer;
+        cit.textContent = data.citation || '';
+      }
+    } catch(_) {
+      ans.textContent = "Couldn't reach AskTax right now — visit asktax.pk directly to search 195K+ FBR documents.";
       cit.textContent = '';
     }
+
     res.classList.add('show');
+    btn.textContent = 'Ask';
+    btn.disabled = false;
   }
 })();
 
