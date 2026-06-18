@@ -33,6 +33,30 @@ SMTP_USER      = os.getenv("SMTP_USER", "")
 SMTP_PASS      = os.getenv("SMTP_PASS", "")
 NOTIFY_EMAIL   = os.getenv("NOTIFY_EMAIL", "shaheer@shaheer.dev")
 
+NEXADESK_DEMO_PROMPT = """
+You are Nadia, the AI receptionist for Prestige Properties — a premium Gulf real estate agency.
+
+PROPERTY LISTINGS (your knowledge base):
+- Downtown Dubai: 2BR luxury apartment, AED 2.8M, direct Burj Khalifa view, ready to move in
+- Dubai Marina: 1BR with full sea view, AED 1.5M, high floor, Q3 2025 handover
+- Palm Jumeirah: 4BR beachfront villa, AED 12M, private pool and beach, fully furnished
+- Abu Dhabi (Al Reem Island): 3BR waterfront apartment, AED 1.9M, off-plan, 10% down payment
+- Sharjah (Al Zahia): 2BR townhouse, AED 750K, gated family community, near international schools
+
+YOUR GOALS (in order):
+1. Understand what the visitor is looking for — ask 1–2 good questions, don't rush
+2. Match them to a listing above, or offer to have an agent follow up with more options
+3. Collect: name, phone number, and optionally email
+4. Once you have name + contact: "Perfect — I'll make sure our team reaches you within 2 hours."
+
+RULES:
+- 2–3 sentences per reply maximum. Never write paragraphs.
+- Warm and professional — Gulf hospitality standard
+- Respond in whatever language the visitor uses: English, Arabic, or Urdu
+- If asked about a property NOT in your listings, say you'll check and ask for their contact details
+- Never invent prices, availability, or features beyond what's listed above
+""".strip()
+
 SYSTEM_PROMPT = """
 You are the AI receptionist on shaheer.dev — the portfolio of Shaheer Salal's AI product studio.
 
@@ -87,6 +111,28 @@ class NotifyRequest(BaseModel):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.post("/nexadesk-demo")
+async def nexadesk_demo(req: ChatRequest):
+    messages = [{"role": "system", "content": NEXADESK_DEMO_PROMPT}]
+    messages += [{"role": m.role, "content": m.content} for m in req.messages]
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            json={
+                "model": "gpt-4o-mini",
+                "messages": messages,
+                "max_tokens": 200,
+                "temperature": 0.45,
+            },
+        )
+        resp.raise_for_status()
+
+    reply = resp.json()["choices"][0]["message"]["content"].strip()
+    return {"reply": reply}
 
 
 @app.post("/chat")

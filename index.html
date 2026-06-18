@@ -1137,8 +1137,8 @@ document.querySelectorAll('.demo-toggle-btn').forEach(btn => {
 
 // ── NEXADESK DEMO ──
 const ndDemo = {
-  ready:     false,
-  sessionId: null,
+  ready:   false,
+  history: [],
   msgEl: null,
   tyEl:  null,
   inEl:  null,
@@ -1151,7 +1151,9 @@ const ndDemo = {
     this.inEl  = document.getElementById('nd-input');
     document.getElementById('nd-send').addEventListener('click', () => this.send());
     this.inEl.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.send(); } });
-    this.addBot("Good day! I'm Nadia, AI receptionist for Prestige Properties. Are you looking to buy, rent, or schedule a viewing today?");
+    const greeting = "Good day! I'm Nadia, AI receptionist for Prestige Properties. Are you looking to buy, rent, or schedule a viewing today?";
+    this.addBot(greeting);
+    this.history.push({role:'assistant', content:greeting});
   },
 
   now() {
@@ -1179,21 +1181,22 @@ const ndDemo = {
     if (!text) return;
     this.addUser(text);
     this.inEl.value = '';
+    this.history.push({role:'user', content:text});
     this.tyEl.style.display = 'flex';
     this.msgEl.scrollTop = this.msgEl.scrollHeight;
     try {
-      const resp = await fetch('https://nexadesk.site/demo/chat', {
+      const resp = await fetch(`${API_BASE}/nexadesk-demo`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({message: text, session_id: this.sessionId})
+        body: JSON.stringify({messages: this.history})
       });
       const data = await resp.json();
-      this.sessionId = data.session_id;
       this.tyEl.style.display = 'none';
       this.addBot(data.reply);
+      this.history.push({role:'assistant', content:data.reply});
     } catch(_) {
       this.tyEl.style.display = 'none';
-      this.addBot("Having trouble reaching NexaDesk right now — try again in a moment.");
+      this.addBot("Having trouble connecting — try again in a moment.");
     }
   },
 
@@ -1218,7 +1221,7 @@ const ndDemo = {
     res.classList.remove('show');
 
     try {
-      const resp = await fetch('https://asktax.pk/api/demo/query', {
+      const resp = await fetch('https://api.asktax.pk/api/demo/query', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({query: val})
