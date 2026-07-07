@@ -1,15 +1,19 @@
+import html as html_lib
 import os
 import smtplib
 import logging
+import time
+from collections import defaultdict
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import List
+from threading import Lock
+from typing import List, Literal
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -21,10 +25,51 @@ app = FastAPI(title="shaheer.dev API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://shaheer.dev", "https://www.shaheer.dev"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
 )
+
+
+# ── SECURITY HEADERS ──
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+
+# ── RATE LIMITER ──
+
+_rate_data: dict[str, list[float]] = defaultdict(list)
+_rate_lock = Lock()
+
+def _check_rate(key: str, max_calls: int, window_secs: int) -> bool:
+    """Sliding-window rate limiter. Returns True if the request is allowed."""
+    now = time.time()
+    with _rate_lock:
+        calls = _rate_data[key]
+        calls[:] = [t for t in calls if now - t < window_secs]
+        if len(calls) >= max_calls:
+            return False
+        calls.append(now)
+        if len(_rate_data) > 20000:
+            stale = [k for k, v in list(_rate_data.items()) if not v][:2000]
+            for k in stale:
+                del _rate_data[k]
+        return True
+
+def _client_ip(request: Request) -> str:
+    cf = request.headers.get("CF-Connecting-IP")
+    if cf:
+        return cf.strip()
+    fwd = request.headers.get("X-Forwarded-For")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 SMTP_HOST      = os.getenv("SMTP_HOST", "smtp.zoho.com")
@@ -91,19 +136,19 @@ RULES:
 # ── MODELS ──
 
 class Message(BaseModel):
-    role: str
-    content: str
+    role: Literal["user", "assistant"]
+    content: str = Field(..., max_length=10000)
 
 class ChatRequest(BaseModel):
-    messages: List[Message]
+    messages: List[Message] = Field(..., min_length=1, max_length=50)
 
 class NotifyRequest(BaseModel):
-    name: str
-    email: str
-    company: str = ""
-    budget: str = ""
-    timeline: str = ""
-    transcript: str = ""
+    name:       str = Field(...,  max_length=200)
+    email:      str = Field(...,  max_length=200)
+    company:    str = Field("",   max_length=200)
+    budget:     str = Field("",   max_length=100)
+    timeline:   str = Field("",   max_length=100)
+    transcript: str = Field("",   max_length=50000)
 
 
 # ── ENDPOINTS ──
@@ -114,7 +159,10 @@ async def health():
 
 
 @app.post("/nexadesk-demo")
-async def nexadesk_demo(req: ChatRequest):
+async def nexadesk_demo(req: ChatRequest, request: Request):
+    if not _check_rate(f"nd:{_client_ip(request)}", max_calls=15, window_secs=600):
+        return {"reply": "Demo is busy right now — please try again in a few minutes."}
+
     messages = [{"role": "system", "content": NEXADESK_DEMO_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.messages]
 
@@ -136,7 +184,10 @@ async def nexadesk_demo(req: ChatRequest):
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
+    if not _check_rate(f"chat:{_client_ip(request)}", max_calls=20, window_secs=600):
+        return {"reply": "I'm getting a lot of messages right now — please wait a moment and try again."}
+
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.messages]
 
@@ -158,9 +209,15 @@ async def chat(req: ChatRequest):
 
 
 @app.post("/notify")
-async def notify(req: NotifyRequest):
+async def notify(req: NotifyRequest, request: Request):
+    if not _check_rate(f"notify:{_client_ip(request)}", max_calls=3, window_secs=3600):
+        return {"success": False}
+
+    def esc(v: str) -> str:
+        return html_lib.escape(v)
+
     try:
-        html = f"""
+        body = f"""
         <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#111">
           <h2 style="color:#4f8ef7;border-bottom:2px solid #4f8ef7;padding-bottom:8px">
             🔥 New Lead from shaheer.dev
@@ -168,31 +225,31 @@ async def notify(req: NotifyRequest):
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr>
               <td style="padding:10px;background:#f5f5f5;font-weight:600;width:120px">Name</td>
-              <td style="padding:10px;border-bottom:1px solid #eee">{req.name}</td>
+              <td style="padding:10px;border-bottom:1px solid #eee">{esc(req.name)}</td>
             </tr>
             <tr>
               <td style="padding:10px;background:#f5f5f5;font-weight:600">Email</td>
               <td style="padding:10px;border-bottom:1px solid #eee">
-                <a href="mailto:{req.email}">{req.email}</a>
+                <a href="mailto:{esc(req.email)}">{esc(req.email)}</a>
               </td>
             </tr>
             <tr>
               <td style="padding:10px;background:#f5f5f5;font-weight:600">Company</td>
-              <td style="padding:10px;border-bottom:1px solid #eee">{req.company or '—'}</td>
+              <td style="padding:10px;border-bottom:1px solid #eee">{esc(req.company) or '—'}</td>
             </tr>
             <tr>
               <td style="padding:10px;background:#f5f5f5;font-weight:600">Budget</td>
-              <td style="padding:10px;border-bottom:1px solid #eee">{req.budget or '—'}</td>
+              <td style="padding:10px;border-bottom:1px solid #eee">{esc(req.budget) or '—'}</td>
             </tr>
             <tr>
               <td style="padding:10px;background:#f5f5f5;font-weight:600">Timeline</td>
-              <td style="padding:10px;border-bottom:1px solid #eee">{req.timeline or '—'}</td>
+              <td style="padding:10px;border-bottom:1px solid #eee">{esc(req.timeline) or '—'}</td>
             </tr>
           </table>
           <h3 style="color:#555;margin-top:24px">Conversation Transcript</h3>
           <div style="background:#f9f9f9;border:1px solid #ddd;border-radius:6px;
                       padding:16px;font-size:13px;white-space:pre-wrap;line-height:1.65">
-{req.transcript}
+{esc(req.transcript)}
           </div>
           <p style="color:#aaa;font-size:12px;margin-top:24px">
             Sent automatically by the AI receptionist on shaheer.dev
@@ -200,11 +257,12 @@ async def notify(req: NotifyRequest):
         </body></html>
         """
 
+        safe_name = req.name.replace("\n", "").replace("\r", "")
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"🔥 New Lead from shaheer.dev — {req.name}"
+        msg["Subject"] = f"🔥 New Lead from shaheer.dev — {safe_name}"
         msg["From"]    = SMTP_USER
         msg["To"]      = NOTIFY_EMAIL
-        msg.attach(MIMEText(html, "html"))
+        msg.attach(MIMEText(body, "html"))
 
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.ehlo()

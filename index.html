@@ -1275,7 +1275,6 @@ const chatSuccess  = document.getElementById('chatSuccess');
 
 let chatReady   = false;
 let chatHistory = [];
-let notified    = false;
 const leadData  = { name: null, email: null };
 
 function openChat() {
@@ -1322,8 +1321,10 @@ function extractLead(text) {
 }
 
 async function maybeNotify() {
-  if (notified || !leadData.name || !leadData.email) return;
-  notified = true;
+  if (!leadData.name || !leadData.email) return;
+  const storageKey = `notified_${leadData.email}`;
+  if (localStorage.getItem(storageKey)) return;
+  localStorage.setItem(storageKey, '1');
 
   const transcript = chatHistory
     .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
@@ -1367,7 +1368,6 @@ async function sendMessage() {
     chatTyping.style.display = 'none';
     addBubble('bot', data.reply);
     chatHistory.push({ role: 'assistant', content: data.reply });
-    extractLead(data.reply);
     await maybeNotify();
   } catch(_) {
     chatTyping.style.display = 'none';
