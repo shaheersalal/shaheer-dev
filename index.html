@@ -1,3 +1,11 @@
+<!--
+  shaheer.dev — AI Product Studio
+  Built by Shaheer Salal · Karachi, Pakistan
+  Stack: HTML · FastAPI (Python) · OpenAI · Vercel · Cloudflare Pages
+  Upwork:   https://upwork.com/freelancers/shaheersalal
+  LinkedIn: https://linkedin.com/in/shaheer-salal
+  GitHub:   https://github.com/shaheersalal
+-->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -431,6 +439,83 @@
       .at-ask{width:100%}
     }
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+    /* ══════════════════════════════════════
+       VISUAL ENHANCEMENTS
+    ══════════════════════════════════════ */
+
+    /* Gradient animated text */
+    .gradient-text{background:linear-gradient(135deg,#4f8ef7 0%,#a78bfa 50%,#38bdf8 100%);
+      background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;animation:gradShift 5s ease-in-out infinite}
+    @keyframes gradShift{0%,100%{background-position:0% center}50%{background-position:100% center}}
+
+    /* Entrance keyframes */
+    @keyframes fadeInUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Hero elements animate on load */
+    .avail-wrap{animation:fadeInUp .5s cubic-bezier(.22,.61,.36,1) both}
+    .hero h1{animation:fadeInUp .6s .07s cubic-bezier(.22,.61,.36,1) both}
+    .hero-sub{animation:fadeInUp .55s .15s cubic-bezier(.22,.61,.36,1) both}
+    .cta-row{animation:fadeInUp .55s .22s cubic-bezier(.22,.61,.36,1) both}
+    .social-row{animation:fadeInUp .5s .28s cubic-bezier(.22,.61,.36,1) both}
+
+    /* Build tiles stagger */
+    .build-grid .build-tile:nth-child(1){animation:fadeInUp .5s .05s ease both}
+    .build-grid .build-tile:nth-child(2){animation:fadeInUp .5s .13s ease both}
+    .build-grid .build-tile:nth-child(3){animation:fadeInUp .5s .21s ease both}
+
+    /* Stats strip */
+    .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+      background:var(--border);border:1px solid var(--border);border-radius:10px;
+      overflow:hidden;margin:40px 0}
+    .stat-cell{background:var(--card-bg);padding:24px 16px;text-align:center;
+      transition:background 180ms ease}
+    .stat-cell:hover{background:var(--bg2)}
+    .stat-num{font-size:clamp(26px,5vw,40px);font-weight:800;line-height:1.1;
+      letter-spacing:-.03em;background:linear-gradient(135deg,#4f8ef7,#a78bfa);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;
+      letter-spacing:.06em;margin-top:5px;font-weight:500}
+    .stats-strip .stat-cell:nth-child(1){animation:fadeInUp .5s .05s ease both}
+    .stats-strip .stat-cell:nth-child(2){animation:fadeInUp .5s .1s ease both}
+    .stats-strip .stat-cell:nth-child(3){animation:fadeInUp .5s .15s ease both}
+
+    /* Ambient hero glow */
+    .hero{position:relative;overflow:visible}
+    .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:360px;height:360px;
+      background:radial-gradient(circle,rgba(79,142,247,.09) 0%,transparent 70%);
+      border-radius:50%;pointer-events:none;z-index:0}
+    .hero>*{position:relative;z-index:1}
+
+    /* Hero eyebrow as accent */
+    .hero-eyebrow{color:var(--accent);font-size:11px;letter-spacing:.1em;
+      text-transform:uppercase;font-weight:600}
+
+    /* Enhanced card hover — lift + glow */
+    .card{transition:border-color 180ms ease,background 180ms ease,box-shadow 220ms ease,transform 220ms ease}
+    .card:hover{border-color:rgba(79,142,247,.35);box-shadow:0 6px 28px rgba(79,142,247,.08);transform:translateY(-2px)}
+    [data-theme="light"] .card:hover{box-shadow:0 6px 28px rgba(37,99,235,.07)}
+
+    /* Primary button glow on hover */
+    .btn-primary{transition:background 180ms ease,border-color 180ms ease,color 180ms ease,box-shadow 180ms ease,transform 180ms ease}
+    .btn-primary:hover{box-shadow:0 0 22px rgba(79,142,247,.42);transform:translateY(-1px)}
+
+    /* Section h2 gradient underline */
+    .section-header h2::after{content:'';display:block;width:36px;height:3px;
+      background:linear-gradient(90deg,#4f8ef7,#a78bfa);border-radius:2px;margin-top:14px}
+
+    /* Review card border pulse */
+    @keyframes borderPulse{0%,100%{border-color:var(--border)}50%{border-color:rgba(79,142,247,.3)}}
+    .review-card{animation:borderPulse 4s ease-in-out infinite}
+
+    /* Featured card glow */
+    .featured-card:hover{box-shadow:0 6px 28px rgba(79,142,247,.1)}
+
+    /* Honeypot — hidden from users, visible to bots */
+    .hp-field{position:absolute;left:-9999px;opacity:0;pointer-events:none;height:0;width:0}
+
+    @media(max-width:600px){.stats-strip{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -477,7 +562,7 @@
 
     <div class="hero">
       <p class="hero-eyebrow">AI Product Studio · Karachi, Pakistan</p>
-      <h1>We turn hard problems into AI&nbsp;systems that earn their keep.</h1>
+      <h1>We turn hard problems into <span class="gradient-text">AI&nbsp;systems</span> that earn their keep.</h1>
       <p class="hero-sub">Shaheer leads a team that builds, ships, and maintains production AI — intelligent receptionists, RAG pipelines, and automation that ties directly to revenue. Two live products. Clients across the UK, Pakistan, and the Gulf.</p>
       <div class="cta-row">
         <button class="btn btn-primary" onclick="navigate('#work')">See our work →</button>
@@ -496,6 +581,22 @@
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           shaheer@shaheer.dev
         </a>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-strip">
+      <div class="stat-cell">
+        <div class="stat-num">2</div>
+        <div class="stat-label">Live AI Products</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">195K+</div>
+        <div class="stat-label">Docs Indexed</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Countries Served</div>
       </div>
     </div>
 
@@ -1038,6 +1139,7 @@
   <div class="chat-success" id="chatSuccess">
     ✓ Shaheer has been notified — expect a reply within 24 hours.
   </div>
+  <input class="hp-field" id="chatHp" type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" />
   <div class="chat-input-row">
     <textarea class="chat-textarea" id="chatInput" placeholder="Type your message…" rows="1"></textarea>
     <button class="chat-send" id="chatSend" aria-label="Send">→</button>
@@ -1345,6 +1447,7 @@ async function maybeNotify() {
 }
 
 async function sendMessage() {
+  if (document.getElementById('chatHp').value) return;
   const text = chatInput.value.trim();
   if (!text) return;
 

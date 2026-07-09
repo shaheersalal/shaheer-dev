@@ -11,7 +11,7 @@ from typing import List, Literal
 
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -42,6 +42,22 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
+# ── BOT UA BLOCKLIST ── (added last = runs first / outermost)
+
+_BOT_UA_FRAGMENTS = [
+    "python-requests", "python-httpx", "python-urllib",
+    "curl/", "wget/", "scrapy/", "go-http-client",
+    "libwww-perl", "java/", "okhttp", "httpie", "axios/",
+]
+
+@app.middleware("http")
+async def block_bots(request: Request, call_next):
+    ua = request.headers.get("user-agent", "").lower()
+    if any(frag in ua for frag in _BOT_UA_FRAGMENTS):
+        return Response("Forbidden", status_code=403)
+    return await call_next(request)
+
+
 # ── RATE LIMITER ──
 
 _rate_data: dict[str, list[float]] = defaultdict(list)
@@ -60,6 +76,24 @@ def _check_rate(key: str, max_calls: int, window_secs: int) -> bool:
             stale = [k for k, v in list(_rate_data.items()) if not v][:2000]
             for k in stale:
                 del _rate_data[k]
+        return True
+
+_interval_data: dict[str, float] = {}
+_interval_lock = Lock()
+
+def _check_interval(key: str, min_secs: float) -> bool:
+    """Returns True if enough time has passed since last call from this IP."""
+    now = time.time()
+    with _interval_lock:
+        last = _interval_data.get(key, 0.0)
+        if now - last < min_secs:
+            return False
+        _interval_data[key] = now
+        if len(_interval_data) > 10000:
+            cutoff = now - 120
+            stale = [k for k, v in list(_interval_data.items()) if v < cutoff][:2000]
+            for k in stale:
+                del _interval_data[k]
         return True
 
 def _client_ip(request: Request) -> str:
@@ -160,8 +194,11 @@ async def health():
 
 @app.post("/nexadesk-demo")
 async def nexadesk_demo(req: ChatRequest, request: Request):
-    if not _check_rate(f"nd:{_client_ip(request)}", max_calls=15, window_secs=600):
+    ip = _client_ip(request)
+    if not _check_rate(f"nd:{ip}", max_calls=15, window_secs=600):
         return {"reply": "Demo is busy right now — please try again in a few minutes."}
+    if not _check_interval(f"nd_iv:{ip}", min_secs=3):
+        return {"reply": "Please wait a moment before sending another message."}
 
     messages = [{"role": "system", "content": NEXADESK_DEMO_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.messages]
@@ -185,8 +222,11 @@ async def nexadesk_demo(req: ChatRequest, request: Request):
 
 @app.post("/chat")
 async def chat(req: ChatRequest, request: Request):
-    if not _check_rate(f"chat:{_client_ip(request)}", max_calls=20, window_secs=600):
+    ip = _client_ip(request)
+    if not _check_rate(f"chat:{ip}", max_calls=20, window_secs=600):
         return {"reply": "I'm getting a lot of messages right now — please wait a moment and try again."}
+    if not _check_interval(f"chat_iv:{ip}", min_secs=3):
+        return {"reply": "Please wait a moment before sending another message."}
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += [{"role": m.role, "content": m.content} for m in req.messages]
