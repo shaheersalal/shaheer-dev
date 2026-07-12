@@ -465,22 +465,6 @@
     .build-grid .build-tile:nth-child(2){animation:fadeInUp .5s .13s ease both}
     .build-grid .build-tile:nth-child(3){animation:fadeInUp .5s .21s ease both}
 
-    /* Stats strip */
-    .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
-      background:var(--border);border:1px solid var(--border);border-radius:10px;
-      overflow:hidden;margin:40px 0}
-    .stat-cell{background:var(--card-bg);padding:24px 16px;text-align:center;
-      transition:background 180ms ease}
-    .stat-cell:hover{background:var(--bg2)}
-    .stat-num{font-size:clamp(26px,5vw,40px);font-weight:800;line-height:1.1;
-      letter-spacing:-.03em;background:linear-gradient(135deg,#4f8ef7,#a78bfa);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .stat-label{font-size:11px;color:var(--text2);text-transform:uppercase;
-      letter-spacing:.06em;margin-top:5px;font-weight:500}
-    .stats-strip .stat-cell:nth-child(1){animation:fadeInUp .5s .05s ease both}
-    .stats-strip .stat-cell:nth-child(2){animation:fadeInUp .5s .1s ease both}
-    .stats-strip .stat-cell:nth-child(3){animation:fadeInUp .5s .15s ease both}
-
     /* Ambient hero glow */
     .hero{position:relative;overflow:visible}
     .hero::before{content:'';position:absolute;top:-80px;right:-80px;width:360px;height:360px;
@@ -614,22 +598,6 @@
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           shaheer@shaheer.dev
         </a>
-      </div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-strip">
-      <div class="stat-cell">
-        <div class="stat-num">2</div>
-        <div class="stat-label">Live AI Products</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num">195K+</div>
-        <div class="stat-label">Docs Indexed</div>
-      </div>
-      <div class="stat-cell">
-        <div class="stat-num">3</div>
-        <div class="stat-label">Countries Served</div>
       </div>
     </div>
 
