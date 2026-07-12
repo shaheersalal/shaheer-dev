@@ -532,7 +532,6 @@
     .js-hire-btns{display:flex;gap:10px;flex-wrap:wrap}
     @media(max-width:600px){.js-input-row{flex-direction:column}.js-search-btn{width:100%}}
 
-    @media(max-width:600px){.stats-strip{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -732,7 +731,7 @@
       <p class="product-pricing"><strong>AED 1,300</strong> setup + <strong>AED 300</strong>/month · US property management available.</p>
       <div class="stack-row">
         <span class="tag">Python</span><span class="tag">FastAPI</span><span class="tag">Claude AI</span>
-        <span class="tag">Twilio</span><span class="tag">Redis Streams</span><span class="tag">Qdrant</span>
+        <span class="tag">Twilio</span><span class="tag">Redis</span><span class="tag">Qdrant</span>
         <span class="tag">Supabase</span><span class="tag">React</span>
       </div>
       <div class="product-actions">
@@ -770,7 +769,7 @@
       <p class="product-headline">CA firms cut tax research from 2 hours to under 5 minutes per query.</p>
       <p class="product-body">AskTax searches 195K+ vectors across 4,491 FBR documents and 2,041 case laws, returning cited verifiable answers instantly. Multi-tenant firm accounts, freemium billing, admin panel. Clients include Muhammad Aslam Khan FCA and Zahid Jamil &amp; Co.</p>
       <div class="stack-row">
-        <span class="tag">FastAPI</span><span class="tag">Qdrant</span><span class="tag">GPT-4o-mini</span>
+        <span class="tag">FastAPI</span><span class="tag">Qdrant</span><span class="tag">GPT-4.1-mini</span>
         <span class="tag">Celery</span><span class="tag">Redis</span><span class="tag">PostgreSQL</span>
         <span class="tag">MinIO</span><span class="tag">Docker</span>
       </div>
@@ -1151,7 +1150,7 @@
 <!-- ── FOOTER ── -->
 <footer class="site-footer">
   <div class="footer-inner">
-    <span class="footer-left">© 2025 Shaheer Salal · AI Product Studio · Karachi, Pakistan</span>
+    <span class="footer-left">© 2026 Shaheer Salal · AI Product Studio · Karachi, Pakistan</span>
     <div class="footer-links">
       <a href="https://github.com/shaheersalal" target="_blank" rel="noopener">GitHub</a>
       <a href="https://upwork.com/freelancers/shaheersalal" target="_blank" rel="noopener">Upwork</a>
@@ -1264,7 +1263,8 @@ function showConfigResult(){
 const demoLabels = {
   'nexadesk-demo': 'Try a simulated conversation →',
   'asktax-demo':   'Try a sample tax query →',
-  'cf-demo':       'See the pipeline →'
+  'cf-demo':       'See the pipeline →',
+  'js-demo':       'Try the live search →'
 };
 document.querySelectorAll('.demo-toggle-btn').forEach(btn => {
   btn.addEventListener('click', function(){
@@ -1377,7 +1377,7 @@ const ndDemo = {
         cit.textContent = data.citation || '';
       }
     } catch(_) {
-      ans.textContent = "Couldn't reach AskTax right now — visit asktax.pk directly to search 195K+ FBR documents.";
+      ans.textContent = "Couldn't reach AskTax right now — visit asktax.pk directly to search 4,491 FBR documents and 2,041 case laws.";
       cit.textContent = '';
     }
 
