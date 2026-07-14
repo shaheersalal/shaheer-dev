@@ -177,8 +177,8 @@ class ChatRequest(BaseModel):
     messages: List[Message] = Field(..., min_length=1, max_length=50)
 
 class NotifyRequest(BaseModel):
-    name:       str = Field(...,  max_length=200)
-    email:      str = Field(...,  max_length=200)
+    name:       str = Field("",   max_length=200)
+    email:      str = Field("",   max_length=200)
     company:    str = Field("",   max_length=200)
     budget:     str = Field("",   max_length=100)
     timeline:   str = Field("",   max_length=100)
@@ -299,7 +299,10 @@ async def notify(req: NotifyRequest, request: Request):
 
         safe_name = req.name.replace("\n", "").replace("\r", "")
         msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"🔥 New Lead from shaheer.dev — {safe_name}"
+        if req.email:
+            msg["Subject"] = f"🔥 New Lead from shaheer.dev — {safe_name}"
+        else:
+            msg["Subject"] = f"👀 Engaged Visitor (no email) — shaheer.dev"
         msg["From"]    = SMTP_USER
         msg["To"]      = NOTIFY_EMAIL
         msg.attach(MIMEText(body, "html"))

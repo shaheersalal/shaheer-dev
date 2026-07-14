@@ -1462,6 +1462,24 @@ function extractLead(text) {
   if (nameM) leadData.name = nameM[1];
 }
 
+async function maybeNotifyPartial() {
+  if (leadData.email) return;
+  if (sessionStorage.getItem('partial_notified')) return;
+  const userCount = chatHistory.filter(m => m.role === 'user').length;
+  if (userCount < 5) return;
+  sessionStorage.setItem('partial_notified', '1');
+  const transcript = chatHistory
+    .map(m => `${m.role === 'user' ? 'Visitor' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
+  try {
+    await fetch(`${API_BASE}/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Unknown Visitor', email: '', company: '', budget: '', timeline: '', transcript })
+    });
+  } catch(_) { /* silent */ }
+}
+
 async function maybeNotify() {
   if (!leadData.name || !leadData.email) return;
   const storageKey = `notified_${leadData.email}`;
@@ -1512,6 +1530,7 @@ async function sendMessage() {
     addBubble('bot', data.reply);
     chatHistory.push({ role: 'assistant', content: data.reply });
     await maybeNotify();
+    await maybeNotifyPartial();
   } catch(_) {
     chatTyping.style.display = 'none';
     addBubble('bot', "I'm having a brief connection issue. You can reach Shaheer directly at shaheer@shaheer.dev — he responds within 24 hours.");
